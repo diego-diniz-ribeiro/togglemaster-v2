@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-targeting-data
+  namespace: togglemaster-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-targeting
+  namespace: togglemaster-data
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postgres-targeting
+  template:
+    metadata:
+      labels:
+        app: postgres-targeting
+    spec:
+      containers:
+        - name: postgres
+          image: localhost/togglemaster-postgres:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: postgres-targeting
+          env:
+            - name: SERVICE_DATABASES
+              value: "targeting"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+              subPath: pgdata
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U \"$POSTGRES_USER\""]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: postgres-targeting-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-targeting
+  namespace: togglemaster-data
+spec:
+  type: ClusterIP
+  selector:
+    app: postgres-targeting
+  ports:
+    - port: 5432
+      targetPort: 5432
