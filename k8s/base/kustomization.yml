@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Resources shared by every environment. Overlays add the images (registry
+# and tag) and the environment-specific ConfigMaps.
+resources:
+  - namespace.yml
+  - auth-service.yml
+  - flag-service.yml
+  - targeting-service.yml
+  - evaluation-service.yml
+  - analytics-service.yml
+  - ingress.yml

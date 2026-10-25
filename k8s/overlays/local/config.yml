@@ -1,0 +1,56 @@
+# Non-secret settings for the local cluster (kind). The data stores run in the
+# togglemaster-data namespace, so their full DNS names are used.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: auth-service-config
+  namespace: togglemaster-app
+data:
+  PORT: "8001"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flag-service-config
+  namespace: togglemaster-app
+data:
+  AUTH_SERVICE_URL: http://auth-service:8001
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: targeting-service-config
+  namespace: togglemaster-app
+data:
+  AUTH_SERVICE_URL: http://auth-service:8001
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: evaluation-service-config
+  namespace: togglemaster-app
+data:
+  PORT: "8004"
+  REDIS_URL: redis://redis.togglemaster-data.svc.cluster.local:6379
+  FLAG_SERVICE_URL: http://flag-service:8002
+  TARGETING_SERVICE_URL: http://targeting-service:8003
+  AWS_REGION: us-east-1
+  AWS_SQS_URL: http://elasticmq.togglemaster-data.svc.cluster.local:9324/000000000000/togglemaster-evaluations
+  AWS_ENDPOINT_URL_SQS: http://elasticmq.togglemaster-data.svc.cluster.local:9324
+  # The emulators accept any credentials; placeholders, not secrets.
+  AWS_ACCESS_KEY_ID: local
+  AWS_SECRET_ACCESS_KEY: local
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: analytics-service-config
+  namespace: togglemaster-app
+data:
+  AWS_REGION: us-east-1
+  AWS_SQS_URL: http://elasticmq.togglemaster-data.svc.cluster.local:9324/000000000000/togglemaster-evaluations
+  AWS_DYNAMODB_TABLE: ToggleMasterAnalytics
+  AWS_ENDPOINT_URL_SQS: http://elasticmq.togglemaster-data.svc.cluster.local:9324
+  AWS_ENDPOINT_URL_DYNAMODB: http://dynamodb-local.togglemaster-data.svc.cluster.local:8000
+  AWS_ACCESS_KEY_ID: local
+  AWS_SECRET_ACCESS_KEY: local

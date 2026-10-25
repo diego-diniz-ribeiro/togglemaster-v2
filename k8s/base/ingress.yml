@@ -1,0 +1,48 @@
+# Single public entry point (port 80) through the Traefik ingress controller.
+# Paths are the services' native routes, so no rewrite is needed.
+# analytics-service is internal only (SQS consumer) and is not exposed.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: togglemaster
+  namespace: togglemaster-app
+spec:
+  ingressClassName: traefik
+  rules:
+    - http:
+        paths:
+          - path: /admin
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  name: http
+          - path: /validate
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  name: http
+          - path: /flags
+            pathType: Prefix
+            backend:
+              service:
+                name: flag-service
+                port:
+                  name: http
+          - path: /rules
+            pathType: Prefix
+            backend:
+              service:
+                name: targeting-service
+                port:
+                  name: http
+          - path: /evaluate
+            pathType: Prefix
+            backend:
+              service:
+                name: evaluation-service
+                port:
+                  name: http

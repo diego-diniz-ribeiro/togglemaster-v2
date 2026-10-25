@@ -1,0 +1,8 @@
+# Data stores that only exist in the local cluster (kind).
+# On AWS they are managed services: RDS, ElastiCache, SQS and DynamoDB.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: togglemaster-data
+  labels:
+    app.kubernetes.io/part-of: togglemaster

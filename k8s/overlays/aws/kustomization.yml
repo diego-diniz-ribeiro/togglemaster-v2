@@ -1,0 +1,29 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# AWS (EKS): shared apps + RDS init job. Data stores are managed services
+# (RDS, ElastiCache, SQS, DynamoDB), so nothing from overlays/local/data here.
+# Apply with: kubectl apply -k k8s/overlays/aws
+resources:
+  - ../../base
+  - config.yml
+  - db-init-job.yml
+# Images pushed to Amazon ECR (immutable tags).
+images:
+  - name: auth-service
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/auth-service
+    newTag: 1.0.0
+  - name: flag-service
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/flag-service
+    newTag: 1.0.0
+  - name: targeting-service
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/targeting-service
+    newTag: 1.0.0
+  - name: evaluation-service
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/evaluation-service
+    newTag: 1.0.0
+  - name: analytics-service
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/analytics-service
+    newTag: 1.0.0
+  - name: togglemaster-postgres
+    newName: 992382833534.dkr.ecr.us-east-1.amazonaws.com/togglemaster-postgres
+    newTag: 1.1.0

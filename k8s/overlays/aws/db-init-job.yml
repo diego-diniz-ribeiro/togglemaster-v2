@@ -1,0 +1,37 @@
+# One-shot job: creates one role and one database per service in RDS (plan B:
+# a single RDS instance hosting auth_db, flags_db and targeting_db) and applies
+# each service schema. Reuses the init script baked into the local PostgreSQL
+# image; PGHOST/PGPASSWORD point psql to RDS. Run once (not idempotent).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: db-init
+  namespace: togglemaster-app
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app: db-init
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: db-init
+          image: togglemaster-postgres
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "/docker-entrypoint-initdb.d/init.sh"]
+          env:
+            - name: SERVICE_DATABASES
+              value: "auth flags targeting"
+          # PGHOST, POSTGRES_USER, PGPASSWORD and <SERVICE>_DB_PASSWORD
+          # (k8s/scripts/create-secrets.sh aws).
+          envFrom:
+            - secretRef:
+                name: db-init
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi

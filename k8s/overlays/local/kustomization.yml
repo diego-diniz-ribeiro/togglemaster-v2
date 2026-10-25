@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# Local cluster (kind): shared apps + in-cluster data stores and emulators.
+# Apply with: kubectl apply -k k8s/overlays/local
+resources:
+  - ../../base
+  - config.yml
+  - data/namespace.yml
+  - data/postgres-auth-flags.yml
+  - data/postgres-targeting.yml
+  - data/redis.yml
+  - data/elasticmq.yml
+  - data/dynamodb-local.yml
+  - data/aws-init.yml
+# Images built with Podman and loaded into the node (kind load image-archive).
+images:
+  - name: auth-service
+    newName: localhost/auth-service
+    newTag: 1.0.0
+  - name: flag-service
+    newName: localhost/flag-service
+    newTag: 1.0.0
+  - name: targeting-service
+    newName: localhost/targeting-service
+    newTag: 1.0.0
+  - name: evaluation-service
+    newName: localhost/evaluation-service
+    newTag: 1.0.0
+  - name: analytics-service
+    newName: localhost/analytics-service
+    newTag: 1.0.0
+
+# The kind node inherits the host's corporate DNS search domains; with the
+# default ndots:5, in-cluster names are first tried against those domains and
+# time out. ndots:1 resolves "svc.namespace..." names as absolute first.
+patches:
+  - target:
+      kind: Deployment
+      namespace: togglemaster-app
+    patch: |-
+      - op: add
+        path: /spec/template/spec/dnsConfig
+        value:
+          options:
+            - name: ndots
+              value: "1"
