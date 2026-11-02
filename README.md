@@ -11,58 +11,7 @@ Os microsserviços ficam em repositórios próprios, cada um com o seu Dockerfil
 [evaluation-service](https://github.com/diego-diniz-ribeiro/evaluation-service) ·
 [analytics-service](https://github.com/diego-diniz-ribeiro/analytics-service)
 
-## Arquitetura na AWS
-
-```mermaid
-flowchart LR
-    user(["Usuário / k6"]) -->|"HTTP :80"| nlb
-
-    subgraph vpc["vpc-toggle-master 10.0.0.0/16 · us-east-1a/1b/1c"]
-        subgraph pub["Subnets públicas · rota para o Internet Gateway"]
-            nlb["Network Load Balancer"]
-            subgraph eks["EKS togglemaster · 2× t3.medium · LabRole"]
-                traefik["Traefik Ingress Controller"]
-                subgraph app["namespace togglemaster-app · Services ClusterIP"]
-                    auth["auth-service<br/>Go :8001"]
-                    flag["flag-service<br/>Python :8002"]
-                    targ["targeting-service<br/>Python :8003"]
-                    evalsvc["evaluation-service<br/>Go :8004<br/>HPA CPU 1→5"]
-                    ana["analytics-service<br/>Python :8005<br/>HPA CPU 1→5"]
-                end
-            end
-        end
-        subgraph priv["Subnets privadas · sem rota para a internet · SG aceita só o cluster"]
-            rds[("RDS PostgreSQL 16<br/>auth_db · flags_db · targeting_db")]
-            redis[("ElastiCache Redis 7.1")]
-        end
-    end
-
-    subgraph regional["Serviços regionais AWS"]
-        sqs[["SQS togglemaster-evaluations"]]
-        dlq[["SQS DLQ"]]
-        ddb[("DynamoDB ToggleMasterAnalytics")]
-        ecr[("ECR")]
-    end
-
-    nlb --> traefik
-    traefik -->|"/admin /validate"| auth
-    traefik -->|"/flags"| flag
-    traefik -->|"/rules"| targ
-    traefik -->|"/evaluate"| evalsvc
-    flag -->|"valida chave"| auth
-    targ -->|"valida chave"| auth
-    evalsvc -->|"cache miss"| flag
-    evalsvc -->|"cache miss"| targ
-    auth --> rds
-    flag --> rds
-    targ --> rds
-    evalsvc -->|"cache TTL 30 s"| redis
-    evalsvc -->|"evento"| sqs
-    sqs -->|"3 falhas"| dlq
-    sqs -->|"long polling"| ana
-    ana --> ddb
-    ecr -.->|"imagens"| eks
-```
+![Arquitetura na AWS](docs/arquitetura-aws.drawio.png)
 
 **Segurança:** apenas o Load Balancer (porta 80) é público; os serviços são
 ClusterIP; RDS e ElastiCache ficam em subnets privadas e aceitam conexões só do
