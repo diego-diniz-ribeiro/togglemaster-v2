@@ -10,6 +10,9 @@ const BASE_URL = __ENV.BASE_URL;
 const FLAG = __ENV.FLAG || "black-friday";
 
 export const options = {
+  // Cap the request rate so a local run (no internet in between) produces the
+  // same load as the AWS run (~300 req/s) instead of overwhelming the cluster.
+  rps: 300,
   stages: [
     { duration: "30s", target: 20 }, // ramp up
     { duration: "3m", target: 50 }, // sustained load -> HPA scales out

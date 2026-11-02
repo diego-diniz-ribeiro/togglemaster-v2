@@ -42,12 +42,14 @@ spec:
             periodSeconds: 10
           resources:
             # The HPA percentage is computed against this CPU request.
+            # Memory: 128Mi was OOMKilled under ~2,700 req/s in a load test
+            # (pending SQS sends pile up); 256Mi gives headroom.
             requests:
               cpu: 100m
-              memory: 32Mi
+              memory: 64Mi
             limits:
               cpu: 500m
-              memory: 128Mi
+              memory: 256Mi
           securityContext:
             allowPrivilegeEscalation: false
 ---
